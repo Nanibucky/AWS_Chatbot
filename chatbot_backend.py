@@ -1,10 +1,8 @@
-#1 import the OS, Bedrock, ConversationChain, ConversationBufferMemory Langchain Modules
 import os
 from langchain.llms.bedrock import Bedrock
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationChain
 
-#2a Write a function for invoking model- client connection with Bedrock with profile, model_id & Inference params- model_kwargs
 def demo_chatbot():
     demo_llm = Bedrock(
        credentials_profile_name='default',
