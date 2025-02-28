@@ -189,7 +189,7 @@ if st.session_state.current_conversation_id:
     current_conv = st.session_state.conversations[st.session_state.current_conversation_id]
     
     # Display header
-    st.title("🤖 Llama 3 AI Chatbot")
+    st.title("🤖 AI Chatbot")
     
     # Create container for chat messages
     chat_container = st.container()
@@ -197,7 +197,7 @@ if st.session_state.current_conversation_id:
     with chat_container:
         # Display initial message when no messages exist
         if not current_conv["messages"]:
-            st.info("👋 Welcome! Type a message to start chatting with the Llama 3 AI assistant.")
+            st.info("👋 Welcome! Type a message to start chatting with the  AI assistant.")
         
         # Display existing messages
         for message in current_conv["messages"]:
