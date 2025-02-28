@@ -2,14 +2,14 @@
 
 ![Chatbot Interface](https://github.com/Nanibucky/AWS_Chatbot/blob/main/source/cover%20page.jpg)
 
-A lightweight, user-friendly chatbot application powered by Meta's Llama 3 model via AWS Bedrock. This application consists of a FastAPI backend and a Streamlit frontend for a seamless chat experience.
+A lightweight, user-friendly chatbot application powered by Foundation models via AWS Bedrock. This application consists of a FastAPI backend and a Streamlit frontend for a seamless chat experience.
 
 ## Features
 
 - 💬 Interactive chat interface with conversation history
-- 🧠 Powered by Meta's Llama 3 (8B parameter instructional model)
+- 🧠 Powered by Bedrock FM's
 - 🔄 Session management with conversation persistence
-- 🌐 RESTful API for easy integration
+- 🌐 FastAPI for easy integration
 - 📱 Responsive web interface built with Streamlit
 
 ## Requirements
@@ -22,8 +22,8 @@ A lightweight, user-friendly chatbot application powered by Meta's Llama 3 model
 
 1. Clone the repository:
    ```
-   git clone https://github.com/username/llama3-chatbot.git
-   cd llama3-chatbot
+   git clone (https://github.com/Nanibucky/AWS_Chatbot.git)
+   cd AWS_Chatbot
    ```
 
 2. Install the required packages:
@@ -40,12 +40,12 @@ A lightweight, user-friendly chatbot application powered by Meta's Llama 3 model
 
 1. Start the backend server:
    ```
-   python back.py
+   python backend.py
    ```
 
 2. In a separate terminal, start the frontend:
    ```
-   python front.py
+   streamlit run frontend.py
    ```
 
 3. Open your browser and navigate to:
@@ -64,9 +64,9 @@ A lightweight, user-friendly chatbot application powered by Meta's Llama 3 model
 ## Project Structure
 
 ```
-llama3-chatbot/
-├── back.py         # FastAPI backend server
-├── front.py        # Streamlit frontend application
+AWS_Chatbot/
+├── backend.py         # FastAPI backend server
+├── frontend.py        # Streamlit frontend application
 ├── requirements.txt # Project dependencies
 └── .env            # Environment variables (create this file)
 ```
@@ -78,11 +78,3 @@ llama3-chatbot/
 - LangChain - LLM integration framework
 - AWS Bedrock - AI model provider
 
-## License
-
-MIT
-
-## Acknowledgements
-
-- This project uses Meta's Llama 3 model via AWS Bedrock
-- Built with LangChain for seamless AI integration
