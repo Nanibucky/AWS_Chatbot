@@ -1,6 +1,6 @@
 # 🤖 AI Chatbot
 
-![Chatbot Interface](https://raw.githubusercontent.com/username/llama3-chatbot/main/docs/images/chatbot-banner.png)
+![Chatbot Interface](source/cover page.jpg)
 
 A lightweight, user-friendly chatbot application powered by Meta's Llama 3 model via AWS Bedrock. This application consists of a FastAPI backend and a Streamlit frontend for a seamless chat experience.
 
