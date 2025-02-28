@@ -2,13 +2,13 @@
 
 ![Chatbot Interface](https://github.com/Nanibucky/AWS_Chatbot/blob/main/source/cover%20page.jpg)
 
-A lightweight, user-friendly chatbot application powered by Foundation models via AWS Bedrock. This application consists of a FastAPI backend and a Streamlit frontend for a seamless chat experience.
+A lightweight, user-friendly chatbot application powered by Foundation models via AWS Bedrock. This application consists of a FastAPI backend and a Streamlit frontend for a seamless chat experience. 
 
 ## Features
 
 - 💬 Interactive chat interface with conversation history
 - 🧠 Powered by Bedrock FM's
-- 🔄 Session management with conversation persistence
+- 🔄 Advanced conversation management for coherent, context-aware dialogues 
 - 🌐 FastAPI for easy integration
 - 📱 Responsive web interface built with Streamlit
 
