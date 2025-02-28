@@ -22,7 +22,7 @@ A lightweight, user-friendly chatbot application powered by Foundation models vi
 
 1. Clone the repository:
    ```
-   git clone (https://github.com/Nanibucky/AWS_Chatbot.git)
+   git clone https://github.com/Nanibucky/AWS_Chatbot.git
    cd AWS_Chatbot
    ```
 
