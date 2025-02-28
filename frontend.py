@@ -179,9 +179,9 @@ with st.sidebar:
     
     # App info
     st.divider()
-    st.markdown("**Llama 3 Chatbot**")
+    st.markdown("**AI Chatbot**")
     st.markdown("Powered by:")
-    st.markdown("- Amazon Bedrock (Llama 3)")
+    st.markdown("- Amazon Bedrock")
     st.markdown("- LangChain & FastAPI")
 
 # Main chat area
