@@ -43,13 +43,13 @@ pip install -r requirements.txt
 1. Start the backend server:
 ```bash
 cd backend
-python app.py
+python chatbot_backend.py
 ```
 
 2. Start the Streamlit frontend:
 ```bash
 cd frontend
-streamlit run app.py
+streamlit run chatbot_frontend.py
 ```
 
 3. Open your browser and go to `http://localhost:8501` to use the chatbot.
