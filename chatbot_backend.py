@@ -1,28 +1,31 @@
 """
-Simplified FastAPI backend for the AI chatbot with AWS Bedrock and LangChain integration
+Fixed FastAPI backend for the AI chatbot with AWS Bedrock and LangChain integration
+with completely revised prompt handling and response parsing
 """
 import os
 import uuid
+import re
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
-from typing import List
+from typing import List, Dict, Optional
+from datetime import datetime
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
 
 # API Configuration
-API_HOST = "127.0.0.1"  # Using explicit IP instead of localhost
-API_PORT = 8080  # Using different port in case 8000 is in use
+API_HOST = "127.0.0.1"
+API_PORT = 8080
 
 # AWS Region - can be set in .env or will use default from AWS CLI config
 AWS_REGION = os.getenv("AWS_REGION", "us-east-1")  # Default to us-east-1 if not set
 
 # LLM Configuration
-MODEL_ID = "meta.llama3-8b-instruct-v1:0"  # AWS Bedrock model ID
-TEMPERATURE = 0.7  # Controls randomness in the model's responses
+MODEL_ID = "meta.llama3-70b-instruct-v1:0"  # AWS Bedrock model ID
+TEMPERATURE = 0  # Controls randomness in the model's responses
 MAX_TOKENS = 500  # Maximum number of tokens to generate
 
 # Initialize FastAPI
@@ -45,7 +48,7 @@ class ChatMessage(BaseModel):
 
 class ChatRequest(BaseModel):
     """Chat request model"""
-    session_id: str = None
+    session_id: Optional[str] = None
     message: str
 
 class ChatResponse(BaseModel):
@@ -53,6 +56,50 @@ class ChatResponse(BaseModel):
     session_id: str
     response: str
     history: List[ChatMessage]
+
+class SessionInfo(BaseModel):
+    """Session information model"""
+    session_id: str
+    created_at: str
+    last_active: str
+    message_count: int
+
+# Updated response extraction function to remove backticks
+def extract_assistant_response(response):
+    """
+    Extract the clean response from the model output.
+    """
+    # Print the raw response for debugging
+    print(f"Raw response from model: {response}")
+    
+    # Simple approach - if the response is clean, return it
+    clean_response = response.strip()
+    
+    # If response has instruction tags, try to clean it
+    if "[/INST]" in response:
+        # Split by instruction tag and take the last part
+        parts = response.split("[/INST]")
+        if len(parts) > 1:
+            clean_response = parts[-1].strip()
+    
+    # If there's a model token at the end, remove it
+    clean_response = clean_response.replace("</s>", "").strip()
+    
+    # Remove triple backticks that might be surrounding the response
+    clean_response = re.sub(r'^```.*?\n|```$', '', clean_response, flags=re.DOTALL)
+    
+    # Remove any other tags
+    clean_response = re.sub(r'\[.*?\]', '', clean_response)
+    
+    # If the response is still empty or just contains tags
+    if clean_response == "" or re.match(r'^\[/?[A-Za-z]+\]$', clean_response):
+        # Fallback response
+        clean_response = "I'm sorry, but I couldn't generate a proper response. Please try asking your question again."
+    
+    # Debug the cleaned response
+    print(f"Cleaned response: {clean_response}")
+    
+    return clean_response
 
 # Create LangChain components
 try:
@@ -62,34 +109,31 @@ try:
     from langchain.prompts import PromptTemplate
     
     def create_llm_chain():
-        """Create a LangChain conversation chain"""
+        """Create a LangChain conversation chain with simplified prompt"""
         # Initialize the Bedrock LLM
         llm = BedrockLLM(
             model_id=MODEL_ID,
             region_name=AWS_REGION,
             model_kwargs={
                 "temperature": TEMPERATURE,
-                "max_gen_len": MAX_TOKENS,
-                "prompt": "",  # Placeholder for the prompt
+                "max_gen_len": MAX_TOKENS
             }
         )
         
         # Create a conversation memory
-        memory = ConversationBufferMemory(return_messages=True)
+        memory = ConversationBufferMemory()
         
-        # Define template
+        # Create a simple prompt template
         template = """
-        <chat>
-        <system>
-        You are a helpful, respectful and honest assistant. Always answer as helpfully as possible.
-        </system>
-        
-        {history}
-        <user>{input}</user>
-        <assistant>
-        </assistant>
-        </chat>
-        """
+You are a helpful AI assistant. Please respond to the following question or request:
+
+{input}
+
+If you refer to our conversation history, here it is:
+{history}
+
+Please provide a direct response without adding prefixes like "Assistant:" or using any special formatting.
+"""
         
         prompt = PromptTemplate(
             input_variables=["history", "input"],
@@ -106,41 +150,42 @@ try:
         
         return conversation_chain
     
-    # Store conversation chains
+    # Store conversation chains and metadata
     conversation_chains = {}
+    session_metadata = {}
     
 except ImportError:
     print("Warning: LangChain or AWS packages not found. Running in mock mode.")
     # Mock implementation for testing without AWS dependencies
     conversation_chains = {}
+    session_metadata = {}
     
     def create_llm_chain():
         """Mock chain that just returns a placeholder response"""
         from collections import namedtuple
         
         MockChain = namedtuple('MockChain', ['memory', 'predict'])
-        MockMemory = namedtuple('MockMemory', ['chat_memory'])
-        MockMessages = namedtuple('MockMessages', ['messages'])
+        MockMemory = namedtuple('MockMemory', ['chat_memory', 'buffer'])
         
-        class MockMessage:
-            def __init__(self, role, content):
-                self.type = role
-                self.content = content
+        class MockChatMemory:
+            def __init__(self):
+                self.messages = []
+                
+            def add_user_message(self, message):
+                self.messages.append({"role": "user", "content": message})
+                
+            def add_ai_message(self, message):
+                self.messages.append({"role": "assistant", "content": message})
         
-        # Create a mock memory with placeholder messages
-        mock_messages = [
-            MockMessage("human", "Test message"),
-            MockMessage("ai", "Test response")
-        ]
-        
-        mock_chat_memory = MockMessages(mock_messages)
-        mock_memory = MockMemory(mock_chat_memory)
+        # Create mock components
+        mock_chat_memory = MockChatMemory()
+        mock_memory = MockMemory(mock_chat_memory, "")
         
         # Create a predict function that returns a placeholder
-        def mock_predict(input):
-            mock_messages.append(MockMessage("human", input))
+        def mock_predict(input, history=""):
+            mock_chat_memory.add_user_message(input)
             response = f"This is a mock response to: {input}"
-            mock_messages.append(MockMessage("ai", response))
+            mock_chat_memory.add_ai_message(response)
             return response
         
         # Return the mock chain
@@ -149,7 +194,11 @@ except ImportError:
 @app.get("/")
 async def root():
     """Root endpoint to check if API is running"""
-    return {"status": "API is running", "endpoints": ["/chat", "/sessions/{session_id}"]}
+    return {
+        "status": "API is running", 
+        "endpoints": ["/chat", "/sessions", "/sessions/{session_id}"],
+        "active_sessions": len(conversation_chains)
+    }
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
@@ -159,43 +208,97 @@ async def chat(request: ChatRequest):
     if not session_id:
         session_id = str(uuid.uuid4())
         conversation_chains[session_id] = create_llm_chain()
+        session_metadata[session_id] = {
+            "created_at": datetime.now().isoformat(),
+            "last_active": datetime.now().isoformat(),
+            "message_count": 0
+        }
     elif session_id not in conversation_chains:
         conversation_chains[session_id] = create_llm_chain()
+        session_metadata[session_id] = {
+            "created_at": datetime.now().isoformat(),
+            "last_active": datetime.now().isoformat(),
+            "message_count": 0
+        }
+    
+    # Update session metadata
+    session_metadata[session_id]["last_active"] = datetime.now().isoformat()
+    session_metadata[session_id]["message_count"] += 1
     
     # Get the conversation chain for this session
     conversation_chain = conversation_chains[session_id]
     
     try:
-        # Format the input correctly for the Bedrock model
-        formatted_input = {
-            "prompt": request.message  # Ensure the input is sent as a "prompt"
-        }
+        # Get history string
+        history = ""
+        if hasattr(conversation_chain.memory, "buffer"):
+            history = conversation_chain.memory.buffer
+
+        # Print the input message for debugging
+        print(f"Input message: {request.message}")
         
         # Get response from the model
-        response = conversation_chain.predict(input=formatted_input)
+        full_response = conversation_chain.predict(input=request.message, history=history)
         
-        # Extract conversation history
+        # Extract the clean response
+        clean_response = extract_assistant_response(full_response)
+        
+        # Build history for the response
         history = []
-        for message in conversation_chain.memory.chat_memory.messages:
-            history.append(ChatMessage(
-                role="user" if message.type == "human" else "assistant",
-                content=message.content
-            ))
+        if hasattr(conversation_chain.memory, "chat_memory") and hasattr(conversation_chain.memory.chat_memory, "messages"):
+            for message in conversation_chain.memory.chat_memory.messages:
+                role = "user" if message.type == "human" else "assistant"
+                content = message.content
+                history.append(ChatMessage(role=role, content=content))
         
         return ChatResponse(
             session_id=session_id,
-            response=response,
+            response=clean_response,
             history=history
         )
     except Exception as e:
         print(f"Error processing chat: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error processing chat: {str(e)}")
 
+@app.get("/sessions")
+async def list_sessions():
+    """List all active chat sessions"""
+    sessions = []
+    for session_id, metadata in session_metadata.items():
+        sessions.append(SessionInfo(
+            session_id=session_id,
+            created_at=metadata["created_at"],
+            last_active=metadata["last_active"],
+            message_count=metadata["message_count"]
+        ))
+    return {"sessions": sessions}
+
+@app.get("/sessions/{session_id}")
+async def get_session(session_id: str):
+    """Get details about a specific chat session"""
+    if session_id in conversation_chains and session_id in session_metadata:
+        # Extract conversation history
+        history = []
+        if hasattr(conversation_chains[session_id].memory, "chat_memory") and hasattr(conversation_chains[session_id].memory.chat_memory, "messages"):
+            for message in conversation_chains[session_id].memory.chat_memory.messages:
+                role = "user" if message.type == "human" else "assistant"
+                content = message.content
+                history.append(ChatMessage(role=role, content=content))
+        
+        return {
+            "session_id": session_id,
+            "metadata": session_metadata[session_id],
+            "history": history
+        }
+    raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
+
 @app.delete("/sessions/{session_id}")
 async def delete_session(session_id: str):
     """Delete a chat session"""
     if session_id in conversation_chains:
         del conversation_chains[session_id]
+        if session_id in session_metadata:
+            del session_metadata[session_id]
         return {"status": "success", "message": f"Session {session_id} deleted"}
     raise HTTPException(status_code=404, detail=f"Session {session_id} not found")
 
