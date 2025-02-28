@@ -1,0 +1,11 @@
+boto3
+langchain
+langchain-openai
+langchain-community
+langchain-core
+fastapi
+streamlit
+uvicorn
+awscli
+langchain_aws
+pydantic
