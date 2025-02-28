@@ -1,66 +1,88 @@
-# README.md
-"""
-# AI Chatbot with LangChain, Bedrock, FastAPI, and Streamlit
+# 🤖 Llama 3 AI Chatbot
 
-This project implements a conversational AI chatbot using:
-- **Amazon Bedrock** with the Llama 3 model for generating responses
-- **LangChain** for conversation management and prompt engineering
-- **FastAPI** as the backend API
-- **Streamlit** for the frontend user interface
+![Chatbot Interface](https://raw.githubusercontent.com/username/llama3-chatbot/main/docs/images/chatbot-banner.png)
 
-## Setup Instructions
-
-### Prerequisites
-- Python 3.9+
-- AWS CLI configured with access to Amazon Bedrock
-- AWS credentials with permissions for Bedrock
-
-### Installation
-
-1. Clone this repository
-2. (Optional) Create a `.env` file in the `backend` directory to customize settings:
-```
-AWS_REGION=your_aws_region  # Optional: will use AWS CLI default if not specified
-MODEL_ID=meta.llama3-70b-instruct-v1
-TEMPERATURE=0.7
-MAX_TOKENS=500
-```
-
-3. Install backend dependencies:
-```bash
-cd backend
-pip install -r requirements.txt
-```
-
-4. Install frontend dependencies:
-```bash
-cd frontend
-pip install -r requirements.txt
-```
-
-### Running the Application
-
-1. Start the backend server:
-```bash
-cd backend
-python chatbot_backend.py
-```
-
-2. Start the Streamlit frontend:
-```bash
-cd frontend
-streamlit run chatbot_frontend.py
-```
-
-3. Open your browser and go to `http://localhost:8501` to use the chatbot.
+A lightweight, user-friendly chatbot application powered by Meta's Llama 3 model via AWS Bedrock. This application consists of a FastAPI backend and a Streamlit frontend for a seamless chat experience.
 
 ## Features
-- Uses AWS CLI for authentication (no need to specify credentials)
-- Persistent conversation memory within sessions
-- Customizable model parameters
-- Clean and intuitive user interface
-- Session management for multiple conversations
 
-## Configuration
-You can customize the application by modifying the environment variables in the `.env` file or directly in `config.py`.
-"""
+- 💬 Interactive chat interface with conversation history
+- 🧠 Powered by Meta's Llama 3 (8B parameter instructional model)
+- 🔄 Session management with conversation persistence
+- 🌐 RESTful API for easy integration
+- 📱 Responsive web interface built with Streamlit
+
+## Requirements
+
+- Python 3.8+
+- AWS account with Bedrock access
+- AWS CLI configured with appropriate permissions
+
+## Installation
+
+1. Clone the repository:
+   ```
+   git clone https://github.com/username/llama3-chatbot.git
+   cd llama3-chatbot
+   ```
+
+2. Install the required packages:
+   ```
+   pip install -r requirements.txt
+   ```
+
+3. Create a `.env` file with your AWS configuration (optional):
+   ```
+   AWS_REGION=us-east-1
+   ```
+
+## Usage
+
+1. Start the backend server:
+   ```
+   python back.py
+   ```
+
+2. In a separate terminal, start the frontend:
+   ```
+   python front.py
+   ```
+
+3. Open your browser and navigate to:
+   ```
+   http://localhost:8501
+   ```
+
+## API Endpoints
+
+- `GET /` - Check API status
+- `POST /chat` - Send a message and get a response
+- `GET /sessions` - List all active sessions
+- `GET /sessions/{session_id}` - Get details about a specific session
+- `DELETE /sessions/{session_id}` - Delete a session
+
+## Project Structure
+
+```
+llama3-chatbot/
+├── back.py         # FastAPI backend server
+├── front.py        # Streamlit frontend application
+├── requirements.txt # Project dependencies
+└── .env            # Environment variables (create this file)
+```
+
+## Dependencies
+
+- FastAPI - Backend API framework
+- Streamlit - Frontend web application
+- LangChain - LLM integration framework
+- AWS Bedrock - AI model provider
+
+## License
+
+MIT
+
+## Acknowledgements
+
+- This project uses Meta's Llama 3 model via AWS Bedrock
+- Built with LangChain for seamless AI integration
