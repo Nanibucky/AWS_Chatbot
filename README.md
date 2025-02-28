@@ -8,7 +8,8 @@ A lightweight, user-friendly chatbot application powered by Foundation models vi
 
 - 💬 Interactive chat interface with conversation history
 - 🧠 Powered by Bedrock FM's
-- 🔄 Advanced conversation management for coherent, context-aware dialogues 
+- 🔄 Advanced conversation management for coherent, context-aware dialogues
+- 🔄 Multi-Session Support: Create and manage multiple conversation threads
 - 🌐 FastAPI for easy integration
 - 📱 Responsive web interface built with Streamlit
 
