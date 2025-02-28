@@ -1,4 +1,4 @@
-# 🤖 Llama 3 AI Chatbot
+# 🤖 AI Chatbot
 
 ![Chatbot Interface](https://raw.githubusercontent.com/username/llama3-chatbot/main/docs/images/chatbot-banner.png)
 
