@@ -1,38 +1,132 @@
-# Source:Below code is provided by Streamlit and AWS 
+"""
+Streamlit frontend for the AI chatbot
+"""
+import streamlit as st
+import requests
+import json
+import time
+from typing import List
 
-#1 import streamlit and chatbot file
-import streamlit as st 
-import  chatbot_backend as demo  #**Import your Chatbot file as demo
+# API Configuration - update to match the backend
+API_URL = "http://127.0.0.1:8080"  # Updated to match backend configuration
 
-#2 Set Title for Chatbot - https://docs.streamlit.io/library/api-reference/text/st.title
-st.title("Hi, This is Chatbot Anisha :sunglasses:") # **Modify this based on the title you want in want
+# App title and configuration
+st.set_page_config(page_title="AI Chatbot", page_icon="🤖", layout="wide")
 
-#3 LangChain memory to the session cache - Session State - https://docs.streamlit.io/library/api-reference/session-state
-if 'memory' not in st.session_state: 
-    st.session_state.memory = demo.demo_memory() #** Modify the import and memory function() attributes initialize the memory
-
-#4 Add the UI chat history to the session cache - Session State - https://docs.streamlit.io/library/api-reference/session-state
-if 'chat_history' not in st.session_state: #see if the chat history hasn't been created yet
-    st.session_state.chat_history = [] #initialize the chat history
-
-#5 Re-render the chat history (Streamlit re-runs this script, so need this to preserve previous chat messages)
-for message in st.session_state.chat_history: 
-    with st.chat_message(message["role"]): 
-        st.markdown(message["text"]) 
-
-#6 Enter the details for chatbot input box 
-     
-input_text = st.chat_input("Powered by Bedrock and LLama 2") # **display a chat input box
-if input_text: 
+# Sidebar with app information
+with st.sidebar:
+    st.title("Llama 3 Chatbot")
+    st.markdown("This chatbot is powered by:")
+    st.markdown("- Amazon Bedrock (Llama 3)")
+    st.markdown("- LangChain")
+    st.markdown("- FastAPI")
+    st.markdown("- Streamlit")
     
-    with st.chat_message("user"): 
-        st.markdown(input_text) 
+    # Add connectivity check
+    st.subheader("API Status")
+    if st.button("Check API Connection"):
+        try:
+            with st.spinner("Checking connection..."):
+                # Set a short timeout for the request
+                response = requests.get(f"{API_URL}/", timeout=5)
+                if response.status_code == 200:
+                    st.success(f"✅ Connected to API at {API_URL}")
+                else:
+                    st.error(f"❌ API returned status code: {response.status_code}")
+        except requests.exceptions.ConnectionError:
+            st.error(f"❌ Cannot connect to API at {API_URL}")
+            st.info("Make sure the backend is running and the URL is correct")
+        except Exception as e:
+            st.error(f"❌ Error: {str(e)}")
     
-    st.session_state.chat_history.append({"role":"user", "text":input_text}) 
+    # Add a clear button
+    if st.button("Clear Conversation"):
+        if "session_id" in st.session_state:
+            session_id = st.session_state.session_id
+            try:
+                requests.delete(f"{API_URL}/sessions/{session_id}", timeout=5)
+                st.session_state.pop("session_id", None)
+                st.session_state.messages = []
+                st.success("Conversation cleared!")
+            except Exception as e:
+                st.error(f"Error clearing conversation: {str(e)}")
+        else:
+            st.session_state.messages = []
+            st.success("Conversation cleared!")
 
-    chat_response = demo.demo_conversation(input_text=input_text, memory=st.session_state.memory) #** replace with ConversationChain Method name - call the model through the supporting library
+# Initialize chat history
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+# Display chat messages from history on app rerun
+st.title("🤖 Llama 3 AI Chatbot")
+
+# Display initial message when no messages exist
+if not st.session_state.messages:
+    st.info("👋 Welcome! Type a message to start chatting with the Llama 3 AI assistant.")
+
+# Display existing messages
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+# Accept user input
+if prompt := st.chat_input("Ask me anything..."):
+    # Add user message to chat history
+    st.session_state.messages.append({"role": "user", "content": prompt})
     
-    with st.chat_message("assistant"): 
-        st.markdown(chat_response) 
+    # Display user message in chat message container
+    with st.chat_message("user"):
+        st.markdown(prompt)
     
-    st.session_state.chat_history.append({"role":"assistant", "text":chat_response}) 
+    # Display assistant response in chat message container
+    with st.chat_message("assistant"):
+        with st.spinner("Thinking..."):
+            try:
+                # Prepare request data
+                request_data = {
+                    "message": prompt
+                }
+                
+                # Include session_id if we have one
+                if "session_id" in st.session_state:
+                    request_data["session_id"] = st.session_state.session_id
+                    
+                # Send request to API with a timeout
+                response = requests.post(
+                    f"{API_URL}/chat",
+                    json=request_data,
+                    timeout=10  # Set a timeout to avoid hanging indefinitely
+                )
+                
+                if response.status_code == 200:
+                    response_data = response.json()
+                    
+                    # Save the session ID
+                    st.session_state.session_id = response_data["session_id"]
+                    
+                    # Display the response
+                    assistant_response = response_data["response"]
+                    st.markdown(assistant_response)
+                    
+                    # Add assistant response to chat history
+                    st.session_state.messages.append({"role": "assistant", "content": assistant_response})
+                else:
+                    error_msg = f"Error: {response.status_code} - {response.text}"
+                    st.error(error_msg)
+                    st.session_state.messages.append({"role": "assistant", "content": error_msg})
+                    
+            except requests.exceptions.ConnectionError:
+                error_msg = "Cannot connect to the backend API. Please make sure the backend server is running."
+                st.error(error_msg)
+                st.session_state.messages.append({"role": "assistant", "content": error_msg})
+                
+            except requests.exceptions.Timeout:
+                error_msg = "Request timed out. The backend server might be overloaded or not responding."
+                st.error(error_msg)
+                st.session_state.messages.append({"role": "assistant", "content": error_msg})
+                
+            except Exception as e:
+                error_msg = f"Error communicating with the API: {str(e)}"
+                st.error(error_msg)
+                st.session_state.messages.append({"role": "assistant", "content": error_msg})
