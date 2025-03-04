@@ -1,7 +1,3 @@
-"""
-Fixed FastAPI backend for the AI chatbot with AWS Bedrock and LangChain integration
-with completely revised prompt handling and response parsing
-"""
 import os
 import uuid
 import re
@@ -24,9 +20,9 @@ API_PORT = 8080
 AWS_REGION = os.getenv("AWS_REGION", "us-east-1")  # Default to us-east-1 if not set
 
 # LLM Configuration
-MODEL_ID = "meta.llama3-70b-instruct-v1:0"  # AWS Bedrock model ID
-TEMPERATURE = 0  # Controls randomness in the model's responses
-MAX_TOKENS = 500  # Maximum number of tokens to generate
+MODEL_ID = "meta.llama3-70b-instruct-v1:0"  
+TEMPERATURE = 0 
+MAX_TOKENS = 500  
 
 # Initialize FastAPI
 app = FastAPI(title="AI Chatbot API")
